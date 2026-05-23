@@ -227,7 +227,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Product Image
+                            
                                 Expanded(
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.only(
@@ -241,7 +241,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     ),
                                   ),
                                 ),
-                                // Product Details
+                                
                                 Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Column(

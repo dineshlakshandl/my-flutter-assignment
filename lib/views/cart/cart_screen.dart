@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../app/routes.dart';
+import '../../viewmodels/cart_viewmodel.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -9,56 +11,11 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final List<Map<String, dynamic>> cartItems = [
-    {
-      'brand': 'Calvin Klein',
-      'name': 'Leather Jacket',
-      'price': 120,
-      'quantity': 1,
-      'size': 'XL',
-      'image': 'assets/images/Blouson en cuir PU pour homme, style motard, col montant, coupe ajustée, décontracté, double.jpg'
-    },
-    {
-      'brand': 'Zara',
-      'name': 'Summer Dress',
-      'price': 80,
-      'quantity': 2,
-      'size': 'M',
-      'image': 'assets/images/redfrock.jpg'
-    },
-  ];
-
-  double totalPrice() {
-    return cartItems.fold(
-            0,
-            (sum, item) =>
-                sum + (item['price'] as int) * (item['quantity'] as int))
-        .toDouble();
-  }
-
-  void incrementQuantity(int index) {
-    setState(() {
-      cartItems[index]['quantity'] = (cartItems[index]['quantity'] as int) + 1;
-    });
-  }
-
-  void decrementQuantity(int index) {
-    setState(() {
-      if ((cartItems[index]['quantity'] as int) > 1) {
-        cartItems[index]['quantity'] =
-            (cartItems[index]['quantity'] as int) - 1;
-      }
-    });
-  }
-
-  void removeItem(int index) {
-    setState(() {
-      cartItems.removeAt(index);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final cartVM = Provider.of<CartViewModel>(context);
+    final cartItems = cartVM.cartItems;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F), 
       appBar: AppBar(
@@ -105,10 +62,18 @@ class _CartScreenState extends State<CartScreen> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Image.network(
-                                item['image'],
+                                item.product.image,
                                 width: 80,
                                 height: 100,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 80,
+                                    height: 100,
+                                    color: Colors.grey[800],
+                                    child: const Icon(Icons.broken_image, color: Colors.white38),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -118,7 +83,7 @@ class _CartScreenState extends State<CartScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    item['brand'].toString().toUpperCase(),
+                                    item.product.brand.toUpperCase(),
                                     style: TextStyle(
                                       color: Colors.grey[500],
                                       fontSize: 10,
@@ -128,7 +93,7 @@ class _CartScreenState extends State<CartScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    item['name'] as String,
+                                    item.product.name,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -139,7 +104,7 @@ class _CartScreenState extends State<CartScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    "Size: ${item['size']}",
+                                    "Size: ${item.size}",
                                     style: const TextStyle(
                                       color: Colors.white54,
                                       fontSize: 12,
@@ -147,7 +112,7 @@ class _CartScreenState extends State<CartScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    "\$${item['price']}",
+                                    "\$${item.product.price.toStringAsFixed(0)}",
                                     style: const TextStyle(
                                       color: Color(0xFFF97316),
                                       fontSize: 18,
@@ -166,7 +131,16 @@ class _CartScreenState extends State<CartScreen> {
                                   constraints: const BoxConstraints(),
                                   padding: EdgeInsets.zero,
                                   icon: const Icon(Icons.delete_outline, color: Colors.white54),
-                                  onPressed: () => removeItem(index),
+                                  onPressed: () {
+                                    cartVM.removeFromCart(item.id);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("${item.product.name} removed from cart"),
+                                        backgroundColor: Colors.redAccent,
+                                        duration: const Duration(seconds: 1),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 const SizedBox(height: 16),
                                 Container(
@@ -180,10 +154,10 @@ class _CartScreenState extends State<CartScreen> {
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         icon: const Icon(Icons.remove, color: Colors.white, size: 16),
-                                        onPressed: () => decrementQuantity(index),
+                                        onPressed: () => cartVM.decrementQuantity(item.id),
                                       ),
                                       Text(
-                                        item['quantity'].toString(),
+                                        item.quantity.toString(),
                                         style: const TextStyle(
                                           color: Colors.white, 
                                           fontSize: 14, 
@@ -194,7 +168,7 @@ class _CartScreenState extends State<CartScreen> {
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         icon: const Icon(Icons.add, color: Colors.white, size: 16),
-                                        onPressed: () => incrementQuantity(index),
+                                        onPressed: () => cartVM.incrementQuantity(item.id),
                                       ),
                                     ],
                                   ),
@@ -232,7 +206,7 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                       ),
                       Text(
-                        "\$${totalPrice()}",
+                        "\$${cartVM.getTotal().toStringAsFixed(0)}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,

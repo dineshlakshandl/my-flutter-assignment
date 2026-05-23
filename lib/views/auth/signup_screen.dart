@@ -1,8 +1,66 @@
 import 'package:flutter/material.dart';
 import '../../app/routes.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
-class SignupScreen extends StatelessWidget {
+class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
+
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthViewModel _authViewModel = AuthViewModel();
+  bool _localLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleRegistration() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password must be at least 6 characters")),
+      );
+      return;
+    }
+
+    setState(() => _localLoading = true);
+
+    bool success = await _authViewModel.registerUser(email, password);
+
+    setState(() => _localLoading = false);
+
+    if (success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Account Created Successfully!")),
+        );
+        Navigator.pushReplacementNamed(context, Routes.login);
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration failed. Email might be in use.")),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +79,6 @@ class SignupScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 16),
-
               const Text(
                 "FASHION STORE",
                 style: TextStyle(
@@ -33,7 +90,6 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-
               const Text(
                 "Create a new account",
                 style: TextStyle(
@@ -43,8 +99,10 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-
+              
               TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: "Email",
@@ -63,10 +121,11 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
+              
               TextField(
+                controller: _passwordController,
                 obscureText: true,
-                style: const TextStyle(color: Colors.white, fontSize: 24),
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: "Password",
                   hintStyle: const TextStyle(color: Colors.white54, fontSize: 16),
@@ -84,26 +143,25 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF97316), 
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              
+              _localLoading
+                ? const CircularProgressIndicator(color: Color(0xFFF97316))
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF97316), 
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: _handleRegistration,
+                    child: const Text(
+                      "Register",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, Routes.login);
-                },
-                child: const Text(
-                  "Register",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
               const SizedBox(height: 8),
-
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, Routes.login);

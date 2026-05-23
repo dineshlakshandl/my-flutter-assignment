@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
-  final Product product;
+  final ProductModel product;
 
   const ProductCard({super.key, required this.product});
 

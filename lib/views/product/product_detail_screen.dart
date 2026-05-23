@@ -1,5 +1,10 @@
+// lib/views/product/product_detail_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../app/routes.dart';
+import '../../models/product_model.dart'; 
+import '../../viewmodels/cart_viewmodel.dart'; 
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -16,16 +21,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final product =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
-        {
-          "brand": "Fashion Store",
-          "name": "Stylish Product",
-          "price": 0,
-          "rating": 5.0,
-          "reviews": 0,
-          "image": "assets/images/Blouson en cuir PU pour homme, style motard, col montant, coupe ajustée, décontracté, double.jpg",
-        };
+    final product = ModalRoute.of(context)!.settings.arguments as ProductModel;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
@@ -37,7 +33,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          product['name'], 
+          product.name, 
           style: const TextStyle(
             color: Colors.white,
             fontFamily: 'serif',
@@ -45,55 +41,65 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.shopping_bag_outlined,
-                  color: Colors.white,
-                ),
-                onPressed: () => Navigator.pushNamed(context, Routes.cart),
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF97316),
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
-                  child: const Text(
-                    '2',
-                    style: TextStyle(
+          Consumer<CartViewModel>(
+            builder: (context, cartVM, child) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.shopping_bag_outlined,
                       color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
                     ),
-                    textAlign: TextAlign.center,
+                    onPressed: () => Navigator.pushNamed(context, Routes.cart),
                   ),
-                ),
-              ),
-            ],
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF97316),
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${cartVM.totalItemCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
       ),
-
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Image.network(
-              product['image'],
+              product.image, 
               width: double.infinity,
               height: 350,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 350,
+                  color: Colors.grey[900],
+                  child: const Icon(Icons.broken_image, color: Colors.white38, size: 40),
+                );
+              },
             ),
 
             Padding(
@@ -102,7 +108,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['brand'].toString().toUpperCase(),
+                    product.brand.toUpperCase(), 
                     style: const TextStyle(
                       color: Color(0xFFF97316), 
                       fontSize: 12,
@@ -113,7 +119,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 8),
 
                   Text(
-                    product['name'],
+                    product.name, 
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 26,
@@ -124,7 +130,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 8),
 
                   Text(
-                    "\$${product['price']}",
+                    "\$${product.price.toStringAsFixed(0)}",
                     style: const TextStyle(
                       color: Color(0xFFF97316),
                       fontSize: 22,
@@ -144,15 +150,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       }),
                       const SizedBox(width: 8),
                       Text(
-                        "(${product['reviews']} reviews)",
+                        "(${product.reviewsCount} reviews)",
                         style: TextStyle(color: Colors.grey[500], fontSize: 14),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    product['description'] ??
-                        "Premium quality ${product['name']} made with top-tier materials. Perfect for your everyday style and maximum comfort.",
+                    product.description.isNotEmpty 
+                        ? product.description 
+                        : "Premium quality ${product.name} made with top-tier materials. Perfect for your everyday style and maximum comfort.",
                     style: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 14,
@@ -207,7 +214,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               fontSize: 14,
-                            ),
+                              ),
                           ),
                         ),
                       );
@@ -290,7 +297,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "${product['name']} added to wishlist!",
+                                  "${product.name} added to wishlist!",
                                 ),
                                 backgroundColor: const Color(0xFFF97316),
                                 duration: const Duration(seconds: 1),
@@ -319,7 +326,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ),
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, Routes.cart);
+                            Provider.of<CartViewModel>(context, listen: false).addToCart(
+                              product,
+                              _selectedSize,
+                              _quantity,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "${product.name} ($_selectedSize) x$_quantity added to cart!",
+                                ),
+                                backgroundColor: const Color(0xFFF97316),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
                           },
                           child: const Text(
                             "Add to Cart",
